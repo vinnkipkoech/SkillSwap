@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 
 // Central Data Store
-const INITIAL_SKILLS = [...]; // Your list of skills
+const INITIAL_SKILLS = [ ]; // Your list of skills
 const CATEGORIES = ["All", "Tech", "Creative", "Music", "Wellness", "Language"];
 
 function App() {
