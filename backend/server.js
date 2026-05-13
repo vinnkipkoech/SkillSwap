@@ -18,16 +18,14 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.log("❌ MongoDB: Connection Error ->", err));
 
 // 3. ROUTES
-// Base Route
 app.get('/', (req, res) => {
   res.send("SkillSwap API is officially online! 🚀");
 });
 
-// Skills Routes (This connects the work you did in routes/skillRoutes.js)
 app.use('/api/skills', skillRoutes);
 
-// 4. START SERVER
-const PORT = process.env.PORT || 5000;
+// 4. START SERVER - Changed default to 5000
+const PORT = process.env.PORT || 5000; 
 app.listen(PORT, () => {
   console.log(`📡 Server heartbeat detected on port ${PORT}`);
 });
