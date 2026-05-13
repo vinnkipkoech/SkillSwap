@@ -29,3 +29,36 @@ function App() {
     </div>
   );
 }
+
+/* --- SECTION 2: INTERACTIVE FEED --- */
+
+// Logic for filtering the skills list
+const filteredSkills = skills.filter(skill => {
+  const matchesSearch = skill.name.toLowerCase().includes(searchTerm.toLowerCase());
+  const matchesCategory = activeCategory === "All" || skill.category === activeCategory;
+  return matchesSearch && matchesCategory;
+});
+
+{/* 🏷️ Category Filter Tabs */}
+<div className="flex gap-2 mb-10">
+  {CATEGORIES.map(cat => (
+    <button onClick={() => setActiveCategory(cat)}> {cat} </button>
+  ))}
+</div>
+
+{/* 🃏 The Skill Grid */}
+<div className="grid md:grid-cols-2 gap-8">
+  {filteredSkills.map(skill => (
+    <div className="bg-white/90 p-8 rounded-[2rem]">
+      {/* Skill Card Details */}
+      <button onClick={() => setSelectedSkill(skill)}>Request Trade</button>
+    </div>
+  ))}
+</div>
+
+{/* 📱 Trade Request Modal */}
+{selectedSkill && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    {/* Modal Logic */}
+  </div>
+)}
