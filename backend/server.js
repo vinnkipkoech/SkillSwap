@@ -3,21 +3,28 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+// Import Routes
+const skillRoutes = require('./routes/skillRoutes');
+
 const app = express();
 
-// 1. MIDDLEWARE (The helpers)
-app.use(cors()); // Allows frontend to talk to backend
-app.use(express.json()); // Allows server to read JSON data sent in requests
+// 1. MIDDLEWARE
+app.use(cors()); 
+app.use(express.json()); 
 
-// 2. DATABASE CONNECTION (The connection to the cloud)
+// 2. DATABASE CONNECTION
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB: Connected to SkillSwap Database"))
   .catch(err => console.log("❌ MongoDB: Connection Error ->", err));
 
-// 3. BASE ROUTE (The "Hello World")
+// 3. ROUTES
+// Base Route
 app.get('/', (req, res) => {
   res.send("SkillSwap API is officially online! 🚀");
 });
+
+// Skills Routes (This connects the work you did in routes/skillRoutes.js)
+app.use('/api/skills', skillRoutes);
 
 // 4. START SERVER
 const PORT = process.env.PORT || 5000;
