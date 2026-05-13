@@ -62,3 +62,30 @@ const filteredSkills = skills.filter(skill => {
     {/* Modal Logic */}
   </div>
 )}
+
+/* --- SECTION 3: COMMUNITY RESOURCES & FORMS --- */
+
+// State for adding skills and toggling FAQs
+const [newSkill, setNewSkill] = useState({ name: '', description: '', level: 'Beginner', category: 'Tech' });
+const [activeResource, setActiveResource] = useState(null);
+
+{/* 🚀 Skill Submission Form */}
+<section className="bg-white/95 p-8 rounded-[2.5rem] mb-16">
+  <form onSubmit={handleAddSkill}>
+    <input onChange={(e) => setNewSkill({...newSkill, name: e.target.value})} />
+    <button>Post to Feed</button>
+  </form>
+</section>
+
+{/* 📘 Accordion Resources Section */}
+<section className="bg-white/10 p-8 rounded-[2.5rem]">
+  <div className="space-y-4">
+    {/* Guidelines Toggle */}
+    <button onClick={() => setActiveResource('guide')}>Community Guidelines</button>
+    {activeResource === 'guide' && <p>Be respectful...</p>}
+
+    {/* Safety Tips Toggle */}
+    <button onClick={() => setActiveResource('safety')}>Safety Tips</button>
+    {activeResource === 'safety' && <p>Meet in public...</p>}
+  </div>
+</section>
