@@ -11,16 +11,22 @@ const getTagColor = (category) => {
   return colors[category] || "text-slate-400 bg-slate-500/10 border-slate-500/20";
 };
 
-// 🆕 Added 'isAdmin' to the destructured props
+/**
+ * SkillCard Component
+ * @param {Object} skill - The skill data from MongoDB.
+ * @param {Function} onSelect - Handles the 'Trade Handshake' request.
+ * @param {Function} onDelete - Handles the 'Delete' CRUD operation (Admin only).
+ * @param {Boolean} isAdmin - Flag to toggle admin moderation tools.
+ */
 const SkillCard = ({ skill, onSelect, onDelete, isAdmin }) => { 
   return (
     <div className="group relative bg-white/95 backdrop-blur-md p-8 rounded-[2.5rem] shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl border border-transparent hover:border-indigo-200 h-full flex flex-col">
       
-      {/* 🔐 Admin-Only Delete Button */}
+      {/* 🔐 Admin-Only Moderation Tool */}
       {isAdmin && (
         <button 
           onClick={(e) => {
-            e.stopPropagation(); 
+            e.stopPropagation(); // Prevents triggering onSelect when deleting
             onDelete(skill._id);
           }}
           className="absolute top-6 right-6 p-2.5 bg-red-50 text-red-400 rounded-2xl opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white hover:rotate-12 transition-all duration-300 z-20 shadow-sm"
@@ -45,7 +51,6 @@ const SkillCard = ({ skill, onSelect, onDelete, isAdmin }) => {
           </p>
         </div>
 
-        {/* Bottom Section */}
         <div className="mt-auto pt-6 border-t border-slate-100 flex justify-between items-center">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">Difficulty</span>
@@ -67,4 +72,3 @@ const SkillCard = ({ skill, onSelect, onDelete, isAdmin }) => {
 };
 
 export default SkillCard;
-
