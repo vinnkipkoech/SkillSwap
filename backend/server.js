@@ -5,6 +5,7 @@ require('dotenv').config();
 
 // Import Routes
 const skillRoutes = require('./routes/skillRoutes');
+const tradeRoutes = require('./routes/trades'); // 🆕 Import the new trades route
 
 const app = express();
 
@@ -23,8 +24,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/skills', skillRoutes);
+app.use('/api/trades', tradeRoutes); // 🆕 Plug in the trades route
 
-// 4. START SERVER - Changed default to 5000
+// 4. START SERVER
 const PORT = process.env.PORT || 5000; 
 app.listen(PORT, () => {
   console.log(`📡 Server heartbeat detected on port ${PORT}`);

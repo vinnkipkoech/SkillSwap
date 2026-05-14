@@ -1,49 +1,115 @@
 import React, { useState, useEffect } from 'react';
-import { fetchSkills, createSkill } from './api';
+import { Toaster, toast } from 'react-hot-toast';
+import { fetchSkills, createSkill, createTrade, fetchTrades, deleteSkill } from './api';
 import SkillCard from './components/SkillCard';
 import SkillForm from './components/SkillForm';
-import SkillCardSkeleton from './components/SkillCardSkeleton'; // 🦴 Added for pro loading feel
+import SkillCardSkeleton from './components/SkillCardSkeleton';
+import TradeInbox from './components/TradeInbox';
 
 const CATEGORIES = ["All", "Tech", "Creative", "Music", "Wellness", "Language"];
 
 function App() {
   const [skills, setSkills] = useState([]); 
+  const [trades, setTrades] = useState([]); 
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', category: 'Tech', level: 'Beginner' });
 
-  /* --- API FETCHING --- */
+  // 🔐 Demo Auth State
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('ss_user')) || null);
+  const [showLogin, setShowLogin] = useState(false);
+
+  /* --- INITIAL DATA FETCH --- */
   useEffect(() => {
-    const getSkills = async () => {
+    const loadAppData = async () => {
       try {
-        const response = await fetchSkills();
-        setSkills(Array.isArray(response.data) ? response.data : []);
+        const [skillsRes, tradesRes] = await Promise.all([
+          fetchSkills(),
+          fetchTrades()
+        ]);
+        setSkills(Array.isArray(skillsRes.data) ? skillsRes.data : []);
+        setTrades(Array.isArray(tradesRes.data) ? tradesRes.data : []);
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("Data fetch error:", error);
+        toast.error("Marketplace sync failed.");
       } finally {
-        // Subtle delay so the Skeleton Loader actually has time to be seen
         setTimeout(() => setLoading(false), 800);
       }
     };
-    getSkills();
+    loadAppData();
   }, []);
 
-  /* --- FORM HANDLING --- */
+  /* --- AUTH HANDLERS --- */
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const username = e.target.username.value;
+    const mockUser = { name: username, role: 'admin' }; // Hardcoded admin for demo
+    setUser(mockUser);
+    localStorage.setItem('ss_user', JSON.stringify(mockUser));
+    setShowLogin(false);
+    toast.success(`Welcome back, ${username}!`);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('ss_user');
+    toast('Logged out of session', { icon: '👋' });
+  };
+
+  /* --- SKILL FORM HANDLING --- */
   const handleAddSkill = async (e) => {
     e.preventDefault();
+    if (!user) return toast.error("Please login to post a skill.");
+    if (formData.description.length < 20) return toast.error("Description too short.");
+
+    setIsSubmitting(true);
+    const loadingToast = toast.loading('Publishing...');
+
     try {
       const { data } = await createSkill(formData);
       setSkills(prev => [data, ...prev]); 
       setFormData({ title: '', description: '', category: 'Tech', level: 'Beginner' });
-      alert("Skill posted! 🚀");
+      toast.success('Skill live! 🚀', { id: loadingToast });
     } catch (error) {
-      alert(`Error: ${error.response?.data?.message || "Check console"}`);
+      toast.error("Post failed.", { id: loadingToast });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  /* --- FILTER LOGIC --- */
+  /* --- ADMIN DELETE HANDLING --- */
+  const handleDeleteSkill = async (id) => {
+    if (!user) return toast.error("Unauthorized action.");
+    if (!window.confirm("Permanent delete?")) return;
+
+    const loadingToast = toast.loading('Deleting...');
+    try {
+      await deleteSkill(id);
+      setSkills(prev => prev.filter(s => s._id !== id));
+      toast.success('Removed.', { id: loadingToast });
+    } catch (error) {
+      toast.error("Delete failed.", { id: loadingToast });
+    }
+  };
+
+  /* --- TRADE HANDLING --- */
+  const handleConfirmTrade = async () => {
+    if (!selectedSkill) return;
+    const loadingToast = toast.loading('Sending request...');
+    try {
+      const { data } = await createTrade({ skillId: selectedSkill._id });
+      setTrades(prev => [data, ...prev]); 
+      toast.success('Request sent! ✉️', { id: loadingToast });
+    } catch (error) {
+      toast.error("Trade failed.", { id: loadingToast });
+    } finally {
+      setSelectedSkill(null);
+    }
+  };
+
   const filteredSkills = skills.filter(skill => {
     const matchesSearch = (skill.title || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = activeCategory === "All" || skill.category === activeCategory;
@@ -52,110 +118,108 @@ function App() {
 
   return (
     <div className="min-h-screen relative font-sans flex flex-col text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Background Layer */}
+      <Toaster position="top-center" gutter={8} />
+
       <div className="fixed inset-0 -z-20 bg-cover bg-center bg-[url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80')]" />
       <div className="fixed inset-0 -z-10 bg-slate-950/70 backdrop-blur-[2px]" />
 
-      {/* Navigation */}
+      {/* --- NAVBAR WITH AUTH TOGGLE --- */}
       <nav className="p-6 bg-white/5 backdrop-blur-xl border-b border-white/10 text-white sticky top-0 z-40">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-black tracking-tighter hover:scale-105 transition-transform cursor-pointer">
+          <h1 className="text-2xl font-black tracking-tighter">
             SKILL<span className="text-indigo-400">SWAP.</span>
           </h1>
-          <div className="relative w-64">
+          
+          <div className="flex items-center gap-6">
             <input 
               type="text" 
-              placeholder="Search skills..." 
-              className="w-full px-5 py-2.5 rounded-2xl bg-white/10 border border-white/20 focus:outline-none focus:bg-white/20 focus:ring-2 focus:ring-indigo-400/50 transition-all text-white placeholder-white/40 shadow-inner"
+              placeholder="Search..." 
+              className="hidden md:block px-5 py-2 rounded-2xl bg-white/10 border border-white/20 focus:outline-none"
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {user ? (
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-bold text-indigo-300">@{user.name}</span>
+                <button onClick={handleLogout} className="text-xs uppercase font-black tracking-widest text-white/50 hover:text-red-400 transition-colors">Logout</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowLogin(true)} className="bg-indigo-600 px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20">Login</button>
+            )}
           </div>
         </div>
       </nav>
       
       <main className="flex-grow max-w-6xl mx-auto py-12 px-4 w-full">
-        <SkillForm 
-          formData={formData} 
-          setFormData={setFormData} 
-          onSubmit={handleAddSkill} 
-          categories={CATEGORIES} 
-        />
+        {/* Only show form to logged-in users */}
+        {user ? (
+          <SkillForm 
+            formData={formData} setFormData={setFormData} 
+            onSubmit={handleAddSkill} categories={CATEGORIES}
+            isSubmitting={isSubmitting}
+          />
+        ) : (
+          <div className="bg-white/5 border border-white/10 p-10 rounded-[3rem] text-center mb-12 backdrop-blur-md">
+            <h2 className="text-white text-xl font-bold mb-2">Ready to share your expertise?</h2>
+            <p className="text-white/50 text-sm mb-6">Login to post skills and start trading with the community.</p>
+            <button onClick={() => setShowLogin(true)} className="text-indigo-400 font-black uppercase text-xs tracking-widest border border-indigo-400/30 px-8 py-3 rounded-2xl hover:bg-indigo-400 hover:text-white transition-all">Sign In</button>
+          </div>
+        )}
 
-        {/* Category Filters */}
         <div className="flex flex-wrap gap-3 mb-12 justify-center">
           {CATEGORIES.map(cat => (
             <button 
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-8 py-2.5 rounded-2xl transition-all duration-300 font-bold tracking-tight ${
-                activeCategory === cat 
-                ? "bg-white text-slate-900 shadow-2xl shadow-white/20 scale-105" 
-                : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/5"
-              }`}
-            > 
-              {cat} 
-            </button>
+              key={cat} onClick={() => setActiveCategory(cat)}
+              className={`px-8 py-2.5 rounded-2xl transition-all font-bold ${activeCategory === cat ? "bg-white text-slate-900 scale-105" : "bg-white/5 text-white/70 hover:bg-white/10"}`}
+            > {cat} </button>
           ))}
         </div>
 
-        {/* Content Section with Skeleton Loading */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
           {loading ? (
-            // Render 6 skeletons while loading
             [...Array(6)].map((_, i) => <SkillCardSkeleton key={i} />)
-          ) : filteredSkills.length === 0 ? (
-            <div className="col-span-full text-center py-24 bg-white/5 backdrop-blur-md border-2 border-dashed border-white/10 rounded-[4rem] animate-in fade-in duration-700">
-              <div className="text-6xl mb-6 grayscale opacity-50">🔍</div>
-              <h3 className="text-2xl font-bold text-white mb-2">No matches found</h3>
-              <p className="text-white/40 mb-8 max-w-xs mx-auto font-medium">
-                Try adjusting your search or category filters.
-              </p>
-              <button 
-                onClick={() => {setSearchTerm(''); setActiveCategory('All');}}
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
-              >
-                Clear Filters
-              </button>
-            </div>
           ) : (
             filteredSkills.map(skill => (
               <SkillCard 
                 key={skill._id} 
                 skill={skill} 
                 onSelect={setSelectedSkill} 
+                onDelete={handleDeleteSkill}
+                isAdmin={user?.role === 'admin'} // 🆕 Pass auth status to card
               />
             ))
           )}
         </div>
+
+        <TradeInbox trades={trades} />
       </main>
 
-      {/* Trade Modal */}
+      {/* --- LOGIN MODAL --- */}
+      {showLogin && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-lg">
+          <form onSubmit={handleLogin} className="bg-white p-10 rounded-[3rem] w-full max-w-sm shadow-2xl animate-in zoom-in-95">
+            <h2 className="text-3xl font-black mb-2 tracking-tight">Welcome.</h2>
+            <p className="text-slate-500 mb-8 font-medium">Enter your name to start swapping.</p>
+            <input name="username" type="text" placeholder="Username" required className="w-full p-4 bg-slate-100 rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-indigo-500 font-bold" />
+            <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">Enter Marketplace</button>
+            <button type="button" onClick={() => setShowLogin(false)} className="w-full mt-4 text-slate-400 font-bold text-sm">Cancel</button>
+          </form>
+        </div>
+      )}
+
+      {/* --- TRADE MODAL --- */}
       {selectedSkill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white p-12 rounded-[3.5rem] max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="text-indigo-600 font-black uppercase text-[10px] tracking-widest mb-2">Trade Request</div>
-            <h2 className="text-3xl font-black mb-4 text-slate-900 tracking-tight leading-tight">Swap for {selectedSkill.title}?</h2>
-            <p className="text-slate-500 mb-10 text-lg leading-relaxed font-medium">This will notify the instructor. Make sure you have a skill ready to offer in return!</p>
-            <div className="flex flex-col gap-3">
-              <button 
-                className="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100" 
-                onClick={() => setSelectedSkill(null)}
-              >
-                Send Request 🚀
-              </button>
-              <button 
-                className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors" 
-                onClick={() => setSelectedSkill(null)}
-              >
-                Maybe Later
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+          <div className="bg-white p-12 rounded-[3.5rem] max-w-md w-full shadow-2xl animate-in zoom-in-95">
+            <h2 className="text-3xl font-black mb-4">Swap for {selectedSkill.title}?</h2>
+            <p className="text-slate-500 mb-10 text-lg font-medium">This sends a request to the instructor.</p>
+            <button className="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-black text-lg hover:bg-indigo-700 active:scale-95 transition-all" onClick={handleConfirmTrade}>Send Request 🚀</button>
+            <button className="w-full py-4 text-slate-400 font-bold" onClick={() => setSelectedSkill(null)}>Cancel</button>
           </div>
         </div>
       )}
 
-      <footer className="bg-slate-950/40 backdrop-blur-md p-12 text-white/30 text-center text-[10px] font-black uppercase tracking-[0.4em]">
-        <p>&copy; 2026 SkillSwap Community Project</p>
+      <footer className="bg-slate-950/40 p-12 text-white/30 text-center text-[10px] font-black uppercase tracking-[0.4em]">
+        &copy; 2026 SkillSwap Community Project
       </footer>
     </div>
   );
