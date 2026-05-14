@@ -17,4 +17,12 @@ export const deleteSkill = (id) => API.delete(`/skills/${id}`); // 🆕 Admin De
 export const createTrade = (tradeData) => API.post('/trades', tradeData);
 export const fetchTrades = () => API.get('/trades');
 
+/**
+ * 🆕 Update Trade Status
+ * Used to finalize the 'Handshake'.
+ * @param {string} id - The trade ID from MongoDB
+ * @param {string} status - Usually 'successful' or 'rejected'
+ */
+export const updateTradeStatus = (id, status) => API.patch(`/trades/${id}`, { status });
+
 export default API;

@@ -1,6 +1,7 @@
 import React from 'react';
 
-const TradeInbox = ({ trades }) => {
+// 🆕 Added 'onAccept' to props
+const TradeInbox = ({ trades, onAccept }) => {
   if (!trades || trades.length === 0) return null;
 
   return (
@@ -18,37 +19,61 @@ const TradeInbox = ({ trades }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {trades.map((trade) => (
-          <div 
-            key={trade._id} 
-            className="group bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-all duration-500"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-400/10 px-3 py-1 rounded-full">
-                {trade.status}
-              </span>
-              <span className="text-white/20 text-[10px] font-medium">
-                {new Date(trade.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-            
-            <h3 className="text-white font-bold text-lg mb-1 group-hover:text-indigo-300 transition-colors">
-              {trade.skillId?.title || "Unknown Skill"}
-            </h3>
-            <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-4">
-              {trade.skillId?.category || "General"}
-            </p>
+        {trades.map((trade) => {
+          const isPending = trade.status === 'pending';
+          const isSuccessful = trade.status === 'successful';
 
-            <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-              <span className="text-white/60 text-[11px] italic">Waiting for instructor...</span>
-              <div className="flex gap-1">
-                <div className="w-1 h-1 rounded-full bg-indigo-500"></div>
-                <div className="w-1 h-1 rounded-full bg-indigo-500/50"></div>
-                <div className="w-1 h-1 rounded-full bg-indigo-500/20"></div>
+          return (
+            <div 
+              key={trade._id} 
+              className={`group backdrop-blur-md border p-6 rounded-[2rem] transition-all duration-500 ${
+                isSuccessful 
+                ? "bg-emerald-500/10 border-emerald-500/20" 
+                : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                  isSuccessful ? "text-emerald-400 bg-emerald-400/10" : "text-indigo-400 bg-indigo-400/10"
+                }`}>
+                  {trade.status}
+                </span>
+                <span className="text-white/20 text-[10px] font-medium">
+                  {new Date(trade.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              
+              <h3 className="text-white font-bold text-lg mb-1 group-hover:text-indigo-300 transition-colors">
+                {trade.skillTitle || trade.skillId?.title || "Skill Exchange"}
+              </h3>
+              <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-4">
+                {trade.skillId?.category || "General"}
+              </p>
+
+              <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                {isPending ? (
+                  <>
+                    <span className="text-white/60 text-[11px] italic">Waiting for instructor...</span>
+                    {/* 🆕 Action Button to trigger the 'Update' CRUD operation */}
+                    <button 
+                      onClick={() => onAccept(trade._id)}
+                      className="bg-indigo-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
+                    >
+                      Accept Trade
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-[11px] font-black uppercase tracking-tighter">Connection Established</span>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
