@@ -1,10 +1,10 @@
-SKILLSWAP 
+**SKILLSWAP**
 
 Knowledge Exchange Platform
 
 SkillSwap is a community-driven bartering platform that allows users to trade skills without the need for currency. By exchanging "time as currency," users can learn everything from coding to singing through a structured, safe, and modern interface.
 
-Technical Highlights
+**Technical Highlights**
 
 Architecture: Decoupled Full-Stack (Frontend on Vercel, Backend on Render).
 
@@ -14,7 +14,7 @@ Persistence: Cloud-based storage via MongoDB Atlas and session persistence with 
 
 Deployment: Fully automated CI/CD pipeline via GitHub.
 
-Tech Stack
+**Tech Stack**
 
 Frontend: React.js, Tailwind CSS (Glassmorphism UI), Lucide Icons.
 
@@ -24,7 +24,7 @@ Database: MongoDB Atlas (Mongoose ODM).
 
 Hosting: Vercel (Frontend) & Render (Backend).
 
-Key Features
+**Key Features**
 
 1. Smart Marketplace
 
@@ -52,7 +52,7 @@ User: Can post skills, browse the marketplace, and initiate/accept trades.
 
 Admin: Possesses all user rights plus moderation tools (Delete any listing) and distinct UI badges.
 
-Installation & Setup
+**Installation & Setup**
 
 Prerequisites
 
@@ -62,7 +62,7 @@ MongoDB Atlas account
 
 Git
 
-Frontend Setup
+**Frontend Setup**
 
 Navigate to the frontend directory.
 
@@ -81,7 +81,7 @@ Start the development server:
 npm start
 
 
-Backend Setup
+**Backend Setup**
 
 Navigate to the backend directory.
 
@@ -101,7 +101,7 @@ Start the server:
 npm run dev
 
 
-👥 The Team
+**The Team**
 
 Vincent
 
@@ -109,6 +109,6 @@ Lincon
 
 Charity 
 
-📄 License
+** License**
 
 This project is part of a Technical Showcase for the 2026 SkillSwap Community. All rights reserved.
